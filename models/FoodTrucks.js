@@ -18,7 +18,8 @@ var FoodTruckSchema = mongoose.Schema({
     rating: Number,
     phoneNumber: String,
     location: {},
-    status: Number
+    status: Number,
+    menu: {}
 });
 
 FoodTruckSchema.methods.generateHash = function(password){
