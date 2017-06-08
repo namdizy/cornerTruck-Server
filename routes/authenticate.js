@@ -46,7 +46,24 @@ router.post('/signup/foodTruck', function(req, res, next){
 
     foodTruck.username = req.body.username;
     foodTruck.password = foodTruck.generateHash(req.body.passwords.password);
-    foodTruck.emailAddress = req.body.emailAddress;
+    foodTruck.emailAddress = '';
+    foodTruck.bio = '';
+    foodTruck.profilePicture = '';
+    foodTruck.online = true;
+    foodTruck.rating = 0;
+    foodTruck.phoneNumber = '';
+    foodTruck.status = 0;
+    var location = {
+        longtitude: '',
+        latitude: '',
+        address: {
+            street: '',
+            city: '',
+            state: '',
+            zipCode: ''
+        }
+    };
+    foodTruck.location = location;
 
     console.log("foodtruck!!", foodTruck);
 
