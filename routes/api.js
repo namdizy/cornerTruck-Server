@@ -108,6 +108,35 @@ router.post('/foodTruck/:foodTruck/location', auth, function (req, res, next) {
     });
 });
 
+router.get('/upload', function (req, res) {
+    console.log(req.query.filename);
+    var s3 = new AWS.S3({ signatureVersion: 'v4' });
+    var fileName = req.query.filename;
+    var fileType = req.query.filetype;
+    var s3Params = {
+        Bucket: 'cornertruck',
+        Key: fileName,
+        Expires: 60,
+        ContentType: fileType,
+        ACL: 'public-read'
+    };
+
+    console.log(fileName);
+
+    s3.getSignedUrl('putObject', s3Params, function (err, data) {
+        if (err) {
+            console.log(err);
+            return res.end();
+        }
+        var returnData = {
+            signedRequest: data,
+            url: 'https://cornertruck.s3.amazonaws.com/' + fileName
+        };
+        res.write(JSON.stringify(returnData));
+        res.end();
+    });
+});
+
 router.param('foodTruck', function (req, res, next, id) {
     var query = FoodTruck.findById(id);
 
