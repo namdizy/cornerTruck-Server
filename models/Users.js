@@ -14,7 +14,8 @@ var UserSchema = mongoose.Schema({
         {type: mongoose.Schema.Types.ObjectId, ref: 'User'}
          ],
     followers: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
-    bio: String
+    bio: String,
+    checkIns: [{type: mongoose.Schema.Types.ObjectId, ref: 'CheckIn'}]
 });
 
 UserSchema.methods.generateHash = function(password){

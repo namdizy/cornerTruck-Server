@@ -8,6 +8,8 @@ const auth = require('../config/auth.js')
 const mongoose = require('mongoose');
 const User = mongoose.model('User');
 const FoodTruck = mongoose.model('FoodTruck');
+const Pin = mongoose.model('Pin');
+const CheckIn = mongoose.model('CheckIn');
 
 router.get('/places', function (req, res, next) {
 
@@ -36,7 +38,7 @@ router.get('/foodTruck/:foodTruck', function (req, res) {
     res.json(req.foodTruck);
 });
 
-router.post('/user/:user', auth, function (req, res, next) {
+router.put('/user/:user', auth, function (req, res, next) {
     User.findById(req.user, function (err, user) {
         if (err) { return next(err); }
 
@@ -108,6 +110,95 @@ router.post('/foodTruck/:foodTruck/location', auth, function (req, res, next) {
     });
 });
 
+router.post('/pin', function (req, res, next) {
+    var pin = new Pin(req.body);
+    pin.confirmed = false;
+    pin.name = req.body.name;
+    pin.caption = req.body.caption;
+    var location = {
+        longtitude: '',
+        latitude: '',
+        address: {
+            street: '',
+            city: '',
+            state: '',
+            zipCode: ''
+        }
+    };
+    pin.location = location;
+    pin.save(function (err, pinData) {
+        if (err) { return next(err); }
+
+        res.json(pin);
+    });
+});
+
+router.get('/pins', function (req, res, next) {
+    FoodTruck.find(function (err, foodTrucks) {
+        if (err) { return next(err); }
+
+        res.json(foodTrucks);
+    });
+});
+
+router.post('/checkIn/foodTruck/:foodTruck/user/:user', function (req, res, next) {
+    var checkIn = new CheckIn(req.body);
+    checkIn.date = new Date();
+    checkIn.points = req.body.points;
+    checkIn.user = req.user;
+    checkIn.foodTruck = req.foodTruck;
+    FoodTruck.findById(req.foodTruck, function (err, foodTruck) {
+        if (err) { return next(err); }
+
+        foodTruck.checkIns.push(checkIn);
+
+        foodTruck.save(function (err, foodTruck) {
+            if (err) { return next(err); }
+        });
+    });
+    User.findById(req.user, function (err, user) {
+        if (err) { return next(err); }
+
+        user.checkIns.push(checkIn);
+
+        user.save(function (err, user) {
+            if (err) { return next(err); }
+
+        });
+    });
+    checkIn.save(function (err, checkIn) {
+        if (err) { return next(err); }
+
+        res.json(checkIn);
+    });
+});
+
+router.get('/checkIns', function (req, res, next) {
+    CheckIn.find(function (err, checkIns) {
+        if (err) { return next(err); }
+
+        res.json(checkIns);
+    });
+});
+
+router.put('/pin/:pin/user/:user', auth, function (req, res, next) {
+    Pin.findById(req.foodTruck, function (err, pin) {
+        if (err) { return next(err); }
+
+        pin.confirmedByUser.push(req.user);
+
+        if (pin.confirmedByUser.length > 1) {
+            pin.confirmed = true;
+        }
+
+        pin.save(function (err, pin) {
+            if (err) { return next(err); }
+
+            res.json(pin);
+        });
+    });
+});
+
 router.get('/upload', function (req, res) {
     console.log(req.query.filename);
     var s3 = new AWS.S3({ signatureVersion: 'v4' });
@@ -157,6 +248,30 @@ router.param('user', function (req, res, next, id) {
         if (!user) { return next(new Error('can\'t find user')); }
 
         req.user = user;
+        return next();
+    });
+});
+
+router.param('pin', function (req, res, next, id) {
+    var query = Pin.findById(id);
+
+    query.exec(function (err, pin) {
+        if (err) { return next(err); }
+        if (!pin) { return next(new Error('can\'t find pin')); }
+
+        req.pin = pin;
+        return next();
+    });
+});
+
+router.param('checkIn', function (req, res, next, id) {
+    var query = CheckIn.findById(id);
+
+    query.exec(function (err, checkIn) {
+        if (err) { return next(err); }
+        if (!checkIn) { return next(new Error('can\'t find user')); }
+
+        req.checkIn = checkIn;
         return next();
     });
 });

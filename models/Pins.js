@@ -5,7 +5,8 @@ var PinSchema = mongoose.Schema({
     location: {},
     caption: String,
     pictureGallery: [String],
-    status: Number
+    confirmed: Boolean,
+    confirmedByUsers: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}]
 });
 
 module.exports = mongoose.model('Pin', PinSchema);
