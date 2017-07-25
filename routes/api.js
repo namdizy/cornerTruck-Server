@@ -10,6 +10,7 @@ const User = mongoose.model('User');
 const FoodTruck = mongoose.model('FoodTruck');
 const Pin = mongoose.model('Pin');
 const CheckIn = mongoose.model('CheckIn');
+const Review = mongoose.model('Review');
 
 router.get('/places', function (req, res, next) {
 
@@ -26,6 +27,15 @@ router.get('/users', function (req, res, next) {
     });
 });
 
+//get all food trucks including yelp trucks and pinned trucks
+router.get('/allFoodTrucks', function (req, res, next) {
+
+    FoodTruck.find(function (err, foodTrucks) {
+        if (err) { return next(err); }
+    })
+})
+
+//get all confirmed food trucks that's in our database
 router.get('/foodTrucks', function (req, res, next) {
     FoodTruck.find(function (err, foodTrucks) {
         if (err) { return next(err); }
@@ -38,6 +48,7 @@ router.get('/foodTruck/:foodTruck', function (req, res) {
     res.json(req.foodTruck);
 });
 
+//update a user's settings
 router.put('/user/:user', auth, function (req, res, next) {
     User.findById(req.user, function (err, user) {
         if (err) { return next(err); }
@@ -57,6 +68,7 @@ router.put('/user/:user', auth, function (req, res, next) {
     });
 });
 
+//update a food truck's settings
 router.put('/foodTruck/:foodTruck', auth, function (req, res, next) {
     FoodTruck.findById(req.foodTruck, function (err, foodTruck) {
         if (err) { return next(err); }
@@ -77,16 +89,12 @@ router.put('/foodTruck/:foodTruck', auth, function (req, res, next) {
     });
 });
 
+//create/update food menu
 router.post('/foodTruck/:foodTruck/menu', auth, function (req, res, next) {
     FoodTruck.findById(req.foodTruck, function (err, foodTruck) {
         if (err) { return next(err); }
 
-        //foodTruck.menu = req.body.menu;
-        var menu = {
-            burger: 'birger'
-        };
-        var arra = [menu];
-        foodTruck.menu = menu;
+        foodTruck.menu = req.body.menu;
 
         foodTruck.save(function (err, foodTruck) {
             if (err) { return next(err); }
@@ -96,6 +104,7 @@ router.post('/foodTruck/:foodTruck/menu', auth, function (req, res, next) {
     });
 });
 
+//update food truck location
 router.post('/foodTruck/:foodTruck/location', auth, function (req, res, next) {
     FoodTruck.findById(req.foodTruck, function (err, foodTruck) {
         if (err) { return next(err); }
@@ -110,6 +119,40 @@ router.post('/foodTruck/:foodTruck/location', auth, function (req, res, next) {
     });
 });
 
+//add a review to a foodTruck
+router.post('/review/:foodTruck', function (req, res, next) {
+    var review = new Review(req.body);
+    FoodTruck.findById(review.foodTruck, function (err, foodTruck) {
+        if (err) { return next(err); }
+        foodTruck.reviews.push(review);
+        foodTruck.save(function (err, truck) {
+            if (err) { return next(err); }
+        })
+    });
+    User.findById(review.user, function (err, user) {
+        if (err) { return next(err); }
+        user.reviews.push(review);
+        user.save(function (err, user) {
+            if (err) { return next(err); }
+        })
+    })
+    review.save(function (err, data) {
+        if (err) { return next(err); }
+
+        res.json(data);
+    });
+});
+
+//get all reviews by food truck id
+router.get('/reviews/:foodTruck', function (req, res, next) {
+    req.foodTruck.populate('reviews', function (err, reviews) {
+        if (err) { return next(err); }
+
+        res.json(reviews);
+    });
+})
+
+//add a pin
 router.post('/pin', function (req, res, next) {
     var pin = new Pin(req.body);
     pin.confirmed = false;
@@ -126,6 +169,10 @@ router.post('/pin', function (req, res, next) {
         }
     };
     pin.location = location;
+    pin.yelpFoodTruck = false;
+    pin.pinnedFoodTruck = true;
+    pin.ctFoodTruck = false;
+
     pin.save(function (err, pinData) {
         if (err) { return next(err); }
 
@@ -133,6 +180,7 @@ router.post('/pin', function (req, res, next) {
     });
 });
 
+//get all pins
 router.get('/pins', function (req, res, next) {
     FoodTruck.find(function (err, foodTrucks) {
         if (err) { return next(err); }
@@ -141,6 +189,7 @@ router.get('/pins', function (req, res, next) {
     });
 });
 
+//check in to a food truck
 router.post('/checkIn/foodTruck/:foodTruck/user/:user', function (req, res, next) {
     var checkIn = new CheckIn(req.body);
     checkIn.date = new Date();
@@ -181,6 +230,7 @@ router.get('/checkIns', function (req, res, next) {
     });
 });
 
+//confirm a pin by a user
 router.put('/pin/:pin/user/:user', auth, function (req, res, next) {
     Pin.findById(req.foodTruck, function (err, pin) {
         if (err) { return next(err); }

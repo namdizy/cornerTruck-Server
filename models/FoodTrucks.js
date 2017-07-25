@@ -19,7 +19,10 @@ var FoodTruckSchema = mongoose.Schema({
     phoneNumber: String,
     location: {},
     status: Number,
-    menu: [{}]
+    menu: [{}],
+    yelpFoodTruck: Boolean,
+    pinnedFoodTruck: Boolean,
+    ctFoodTruck: Boolean
 });
 
 FoodTruckSchema.methods.generateHash = function(password){

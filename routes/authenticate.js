@@ -64,6 +64,9 @@ router.post('/signup/foodTruck', function(req, res, next){
         }
     };
     foodTruck.location = location;
+    foodTruck.yelpFoodTruck = false;
+    foodTruck.pinnedFoodTruck = false;
+    foodTruck.ctFoodTruck = true;
 
     console.log("foodtruck!!", foodTruck);
 
